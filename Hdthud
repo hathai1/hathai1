@@ -1,0 +1,107 @@
+-- Tạo các biến cần thiết
+local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
+local gui = player:WaitForChild("PlayerGui")
+local screenGui = gui:WaitForChild("ScreenGui")
+local button = screenGui:WaitForChild("FlyButton")  -- Nút nổi
+local isFlying = false
+local speed = 100  -- Tốc độ di chuyển nhanh
+local jumpHeight = 50  -- Chiều cao nhảy
+
+-- Các trạng thái của chức năng
+local canFly = false
+local canSpeed = false
+local canJumpHigh = false
+
+-- Hàm bay
+local function enableFlying()
+    if canFly then
+        isFlying = not isFlying
+        if isFlying then
+            -- Kích hoạt bay
+            local character = player.Character
+            local humanoid = character:WaitForChild("Humanoid")
+            local bodyVelocity = Instance.new("BodyVelocity")
+            bodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
+            bodyVelocity.Velocity = Vector3.new(0, 50, 0)  -- Tạo lực bay lên
+            bodyVelocity.Parent = character:WaitForChild("HumanoidRootPart")
+        else
+            -- Dừng bay
+            local character = player.Character
+            local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+            for _,v in pairs(humanoidRootPart:GetChildren()) do
+                if v:IsA("BodyVelocity") then
+                    v:Destroy()
+                end
+            end
+        end
+    end
+end
+-- Hàm chạy nhanh
+local function enableSpeed()
+    if canSpeed then
+        local character = player.Character
+        local humanoid = character:WaitForChild("Humanoid")
+        humanoid.WalkSpeed = 50  -- Tăng tốc độ chạy
+    else
+        local character = player.Character
+        local humanoid = character:WaitForChild("Humanoid")
+        humanoid.WalkSpeed = 16  -- Tốc độ mặc định
+    end
+end
+
+-- Hàm nhảy cao
+local function enableJumpHigh()
+    if canJumpHigh then
+        local character = player.Character
+        local humanoid = character:WaitForChild("Humanoid")
+        humanoid.JumpHeight = 100  -- Nhảy cao
+    else
+        local character = player.Character
+        local humanoid = character:WaitForChild("Humanoid")
+        humanoid.JumpHeight = 50  -- Nhảy bình thường
+    end
+end
+
+-- Định vị người chơi
+local function locatePlayer()
+    local character = player.Character
+    if character then
+        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+        local position = humanoidRootPart.Position
+        print("Vị trí của bạn là: ", position)  -- In ra tọa độ người chơi
+    end
+end
+
+-- Nhấn 2 lần vào nút để tắt chức năng
+local clickCount = 0
+button.MouseButton1Click:Connect(function()
+    clickCount = clickCount + 1
+    if clickCount == 2 then
+        -- Tắt tất cả các chức năng
+        isFlying = false
+        canFly = false
+        canSpeed = false
+        canJumpHigh = false
+        enableFlying()
+        enableSpeed()
+        enableJumpHigh()
+        clickCount = 0
+    end
+end)
+
+-- Lắng nghe lệnh chat để bật tắt chức năng
+game.ReplicatedStorage.DefaultChatSystemChatEvents.OnMessageDoneFiltering.OnClientEvent:Connect(function(message, speaker)
+    if message == ";fly" then
+        canFly = true
+        enableFlying()
+    elseif message == ";speed" then
+        canSpeed = true
+        enableSpeed()
+    elseif message == ";jump" then
+        canJumpHigh = true
+        enableJumpHigh()
+    elseif message == ";locate" then
+        locatePlayer()
+     end
+end)
